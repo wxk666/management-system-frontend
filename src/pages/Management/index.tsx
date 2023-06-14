@@ -1,7 +1,7 @@
 import {request} from "@umijs/max";
 import {useEffect, useState} from "react";
 import {Button, Card, Form, message, Modal, Space, Table} from "antd";
-import {ProFormMoney, ProFormText,} from "@ant-design/pro-form";
+import {ProFormDatePicker, ProFormMoney, ProFormText,} from "@ant-design/pro-form";
 import {
     QueryFilter,
 } from '@ant-design/pro-components';
@@ -43,7 +43,10 @@ const scrapped =  (body: any) =>{
 const Management = () =>{
     const [dataSource, setDataSource] = useState<any>([])
     const [showFix, setShowFix] = useState<string>("")
+    const [showScrapped, setShowScrapped] = useState<string>("")
+
     const [form] = Form.useForm()
+    const [form2] = Form.useForm()
 
     const getList = async (values = {}) =>{
         const res = await list(values)
@@ -55,22 +58,23 @@ const Management = () =>{
         getList()
     }
     const fixItem = async (values) =>{
-        await fix({_id: showFix, money: values.money, creator: localStorage.getItem("name")})
+        await fix({...values,_id: showFix})
         message.success("维修状态设置成功")
         getList()
         setShowFix("")
     }
-    const scrappedItem = async (_id) =>{
-        await scrapped({_id, creator: localStorage.getItem("name")})
+    const scrappedItem = async (values) =>{
+        await scrapped({_id: showScrapped, ...values})
         message.success("报废状态设置成功")
         getList()
+        setShowScrapped("")
     }
     useEffect(() => {
         getList()
     }, []);
     const columns = [
         {
-            dataIndex:"_id",
+            dataIndex:"id",
             title:"设备号"
         },
         {
@@ -91,7 +95,7 @@ const Management = () =>{
                             setShowFix(row._id)
                         }}>维修</Button>
                         <Button type={"link"} size={"small"} onClick={()=>{
-                            scrappedItem(row._id)
+                            setShowScrapped(row._id)
                         }}>报废</Button>
                         <Button type={"link"} size={"small"} danger onClick={()=>{
                             removeItem(row._id)
@@ -120,6 +124,21 @@ const Management = () =>{
                 fixItem(values)
             }}>
                 <ProFormMoney label={"维修费"} name={"money"}/>
+                <ProFormText label={"维修人"} name={"creator"}/>
+                <ProFormDatePicker label={"维修时间"} name={"time"}/>
+            </Form>
+        </Modal>
+        <Modal title={"设备维修"} open={!!showScrapped} onOk={() =>{
+            form2.submit()
+        }
+        } onCancel={()=>{
+            setShowScrapped("")
+        }}>
+            <Form form={form2} onFinish={(values)=>{
+                scrappedItem(values)
+            }}>
+                <ProFormText label={"操作人"} name={"creator"}/>
+                <ProFormDatePicker label={"报废时间"} name={"time"}/>
             </Form>
         </Modal>
     </Card>
